@@ -1,0 +1,23 @@
+# Secrets & local config (never commit real keys)
+/config/config.php
+/config/public-url.txt
+/config/*.local.php
+
+# Runtime / tunnel
+/storage/*
+!/storage/.gitkeep
+!/storage/.htaccess
+/tools/*.log
+/tools/*.pid
+/tools/cloudflared.exe
+/tools/cloudflared
+
+# Packaged uploads
+*.zip
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
