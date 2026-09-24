@@ -19,12 +19,43 @@ final class AppConfig
         return dirname(__DIR__) . '/config/config.example.php';
     }
 
+    /**
+     * Create config.php from example if missing (needed on fresh cPanel upload).
+     */
+    public static function ensureFile(): bool
+    {
+        $path = self::path();
+        if (is_file($path)) {
+            return true;
+        }
+        $example = self::examplePath();
+        if (!is_file($example)) {
+            return false;
+        }
+        $dir = dirname($path);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        return (bool) @copy($example, $path);
+    }
+
+    public static function isWritable(): bool
+    {
+        self::ensureFile();
+        $path = self::path();
+        if (!is_file($path)) {
+            return is_writable(dirname($path));
+        }
+        return is_writable($path);
+    }
+
     public static function all(): array
     {
         if (self::$cache !== null) {
             return self::$cache;
         }
 
+        self::ensureFile();
         $path = self::path();
         if (!is_file($path)) {
             $example = self::examplePath();

@@ -7,22 +7,17 @@ Options -Indexes
   AddType text/css css
 </IfModule>
 
-# Larger image posts for phone scans (may be disabled on some cPanel plans —
-# then set the same limits in MultiPHP INI Editor)
-<IfModule mod_php.c>
-  php_value post_max_size 16M
-  php_value upload_max_filesize 16M
-  php_value max_execution_time 120
-  php_value memory_limit 256M
-</IfModule>
-<IfModule mod_php8.c>
-  php_value post_max_size 16M
-  php_value upload_max_filesize 16M
-  php_value max_execution_time 120
-  php_value memory_limit 256M
-</IfModule>
+# 注意：不要在这里写 php_value / php_flag。
+# cPanel 使用 PHP-FPM 时，.htaccess 里的 php_value 会导致整站 500。
+# 请到 cPanel → MultiPHP INI Editor 设置：
+#   post_max_size = 16M
+#   upload_max_filesize = 16M
+#   max_execution_time = 120
+#   memory_limit = 256M
 
-# Force HTTPS if available (uncomment on production if needed)
+# 可选：强制 HTTPS（域名已装 SSL 后再取消注释）
+# <IfModule mod_rewrite.c>
 # RewriteEngine On
 # RewriteCond %{HTTPS} off
 # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# </IfModule>

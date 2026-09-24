@@ -32,6 +32,45 @@ function bindShowHide(inputId, btnId) {
   });
 }
 
+function phoneUrl() {
+  const el = document.getElementById("phoneQrUrl");
+  return (el?.dataset?.url || el?.textContent || "").trim();
+}
+
+function renderQr() {
+  const url = phoneUrl();
+  const canvas = document.getElementById("phoneQrCanvas");
+  const img = document.getElementById("phoneQrImg");
+  if (!url) return;
+
+  if (window.QRCode && canvas) {
+    QRCode.toCanvas(
+      canvas,
+      url,
+      { width: 280, margin: 2, errorCorrectionLevel: "M", color: { dark: "#111111", light: "#ffffff" } },
+      (err) => {
+        if (err) {
+          fallbackQrImage(url, canvas, img);
+        }
+      }
+    );
+    return;
+  }
+  fallbackQrImage(url, canvas, img);
+}
+
+function fallbackQrImage(url, canvas, img) {
+  if (canvas) canvas.hidden = true;
+  if (!img) return;
+  img.hidden = false;
+  img.src = "api/qr.php?u=" + encodeURIComponent(url) + "&t=" + Date.now();
+  img.onerror = () => {
+    img.src =
+      "https://api.qrserver.com/v1/create-qr-code/?size=280x280&ecc=M&margin=8&data=" +
+      encodeURIComponent(url);
+  };
+}
+
 document.getElementById("settingsForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = e.target;
@@ -64,7 +103,8 @@ document.getElementById("settingsForm").addEventListener("submit", async (e) => 
     fillForm(json.data);
     document.getElementById("saveMsg").textContent = "Settings saved.";
   } catch (err) {
-    document.getElementById("saveMsg").textContent = err.message;
+    document.getElementById("saveMsg").textContent =
+      err.message + "（若在 cPanel：请确认 config 文件夹可写，并已有 config.php）";
   } finally {
     btn.disabled = false;
     btn.textContent = "Save settings";
@@ -97,7 +137,7 @@ document.getElementById("testBtn").addEventListener("click", async () => {
 const copyBtn = document.getElementById("copyUrlBtn");
 if (copyBtn) {
   copyBtn.addEventListener("click", async () => {
-    const url = document.getElementById("phoneQrUrl")?.textContent?.trim() || "";
+    const url = phoneUrl();
     try {
       await navigator.clipboard.writeText(url);
       copyBtn.textContent = "已复制";
@@ -110,28 +150,20 @@ if (copyBtn) {
 
 const openHttpsBtn = document.getElementById("openHttpsBtn");
 if (openHttpsBtn) {
-  const url = document.getElementById("phoneQrUrl")?.textContent?.trim() || "";
-  openHttpsBtn.href = url || "index.php";
-}
-
-const qrImg = document.getElementById("phoneQrImg");
-if (qrImg) {
-  qrImg.addEventListener("error", () => {
-    const url = document.getElementById("phoneQrUrl")?.textContent?.trim() || "";
-    qrImg.src =
-      "https://api.qrserver.com/v1/create-qr-code/?size=280x280&ecc=M&margin=8&data=" +
-      encodeURIComponent(url);
-  });
+  openHttpsBtn.href = phoneUrl() || "index.php";
 }
 
 bindShowHide("gemini_api_key", "toggleGeminiKey");
 bindShowHide("agnes_api_key", "toggleAgnesKey");
+
+renderQr();
 
 (async function init() {
   try {
     const data = await loadSettings();
     fillForm(data);
   } catch (err) {
-    document.getElementById("saveMsg").textContent = err.message;
+    document.getElementById("saveMsg").textContent =
+      err.message + "（检查 PHP 是否 8+，以及 api/settings.php 能否打开）";
   }
 })();

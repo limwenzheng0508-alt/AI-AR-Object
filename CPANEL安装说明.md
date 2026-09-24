@@ -88,8 +88,11 @@ cPanel 域名开好 SSL（Let’s Encrypt）后，二维码会自动变成 `http
 
 | 问题 | 处理 |
 |------|------|
-| 500 错误 | PHP 版本过低；看 Errors 日志 |
-| 无法保存设置 | `config/` 要可写（755） |
-| 相机打不开 | 必须用 https |
-| 识别乱/失败 | Key 未填或配额不足 |
-| php_value 报错 | 删 `.htaccess` 里 php_value，改用 MultiPHP INI |
+| **整站打不开 / 500** | 旧版 `.htaccess` 里的 `php_value` 在 cPanel PHP-FPM 会炸。请用新版 `.htaccess`（已去掉 php_value），或临时删掉根目录 `.htaccess` 再试 |
+| **没有二维码** | 1) 用 **https** 打开 settings；2) 确认 `assets/js/settings.js` 已上传；3) 点「复制链接」也能用 |
+| **不能开相机** | 必须 `https://域名/...`，http 或 IP 裸访问会被浏览器拦 |
+| **Settings 保存失败** | `config/` 权限 755；复制 `config.example.php` → `config.php` |
+| **识别不能用** | 填 Gemini Key 并 Save；Select PHP Extensions 开启 **curl** |
+| **解压后路径不对** | 确认是 `public_html/ai-ar/index.php`，不要多一层 `ai-ar/ai-ar-object-recognition/` |
+| PHP 版本过低 | MultiPHP 选 **8.2 / 8.3**（不要 7.x） |
+| php_value 报错 | 不要在 `.htaccess` 写 php_value，改用 MultiPHP INI Editor |

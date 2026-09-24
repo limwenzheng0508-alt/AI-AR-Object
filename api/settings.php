@@ -7,6 +7,8 @@ require_once dirname(__DIR__) . '/includes/AppConfig.php';
 require_once dirname(__DIR__) . '/includes/GeminiVision.php';
 require_once dirname(__DIR__) . '/includes/AgnesVision.php';
 
+AppConfig::ensureFile();
+
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 if ($method === 'GET') {
@@ -29,6 +31,12 @@ if ($method === 'POST') {
     }
 
     if ($action === 'save') {
+        if (!AppConfig::isWritable()) {
+            ApiResponse::fail(
+                'config.php 不可写。请在 cPanel 把 config 文件夹权限设为 755，并确保存在可写的 config.php。',
+                500
+            );
+        }
         $ok = AppConfig::save([
             'ai_provider' => $body['ai_provider'] ?? 'auto',
             'gemini_api_key' => $body['gemini_api_key'] ?? '',
@@ -44,7 +52,7 @@ if ($method === 'POST') {
         ]);
 
         if (!$ok) {
-            ApiResponse::fail('Unable to save settings.', 500);
+            ApiResponse::fail('Unable to save settings. Check config folder permissions.', 500);
         }
         ApiResponse::ok(AppConfig::publicView());
     }
