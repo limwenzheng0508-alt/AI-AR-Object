@@ -50,17 +50,26 @@
         <strong>智能识别：</strong>下方填写 Gemini API Key → Save settings。
       </p>
       <div class="qr-box">
-        <canvas id="phoneQrCanvas" width="280" height="280" class="qr-image" aria-label="Phone scan QR code"></canvas>
-        <img id="phoneQrImg" class="qr-image" width="280" height="280" alt="" hidden />
+        <?php
+          $qrSrc = 'api/qr.php?u=' . rawurlencode($phoneUrl) . '&t=' . time();
+        ?>
+        <img
+          id="phoneQrImg"
+          class="qr-image"
+          src="<?= htmlspecialchars($qrSrc, ENT_QUOTES, 'UTF-8') ?>"
+          width="280"
+          height="280"
+          alt="手机扫描二维码"
+          decoding="async"
+        />
+        <canvas id="phoneQrCanvas" width="280" height="280" class="qr-image" hidden aria-hidden="true"></canvas>
         <p class="qr-url" id="phoneQrUrl" data-url="<?= htmlspecialchars($phoneUrl, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($phoneUrl, ENT_QUOTES, 'UTF-8') ?></p>
         <?php if ($isHttps): ?>
-          <p class="qr-sub" style="color:#9fe0c8">✓ HTTPS 已就绪，手机可开相机</p>
+          <p class="qr-sub" style="color:#9fe0c8">✓ HTTPS 已就绪 — 用手机扫上方二维码即可开相机</p>
         <?php else: ?>
-          <p class="qr-sub" style="color:#f0b4b4">⚠ 当前不是 HTTPS。请到 cPanel 为域名开启 SSL，再用 https 打开本页。</p>
+          <p class="qr-sub" style="color:#f0b4b4">⚠ 请用 https://你的域名/... 打开本页，否则手机扫码后可能无法开相机</p>
         <?php endif; ?>
-        <p class="qr-help">若二维码空白：检查本页是否用 https 打开，或点下方「复制链接」手动发给手机。</p>
-        <button type="button" class="ghost-btn" id="copyUrlBtn">复制链接</button>
-        <a class="ghost-btn" id="openHttpsBtn" href="<?= htmlspecialchars($phoneUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener">打开扫描页</a>
+        <a class="primary-btn" id="openHttpsBtn" href="<?= htmlspecialchars($phoneUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener">在本机打开扫描页</a>
       </div>
     </section>
 
@@ -142,7 +151,7 @@
     </section>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+  <script src="assets/js/vendor/qrcode.min.js"></script>
   <script src="assets/js/settings.js"></script>
 </body>
 </html>

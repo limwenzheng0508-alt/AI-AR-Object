@@ -37,38 +37,43 @@ function phoneUrl() {
   return (el?.dataset?.url || el?.textContent || "").trim();
 }
 
-function renderQr() {
+/** If server PNG fails, redraw QR on canvas using local library (no CDN). */
+function reinforceQr() {
   const url = phoneUrl();
-  const canvas = document.getElementById("phoneQrCanvas");
   const img = document.getElementById("phoneQrImg");
-  if (!url) return;
+  const canvas = document.getElementById("phoneQrCanvas");
+  if (!url || !img) return;
 
+  img.addEventListener("error", () => {
+    if (!window.QRCode || !canvas) return;
+    QRCode.toCanvas(
+      canvas,
+      url,
+      { width: 280, margin: 2, errorCorrectionLevel: "M", color: { dark: "#111111", light: "#ffffff" } },
+      (err) => {
+        if (err) return;
+        img.hidden = true;
+        canvas.hidden = false;
+      }
+    );
+  });
+
+  // Also upgrade blurry/failed SVG placeholders via canvas when possible
   if (window.QRCode && canvas) {
     QRCode.toCanvas(
       canvas,
       url,
       { width: 280, margin: 2, errorCorrectionLevel: "M", color: { dark: "#111111", light: "#ffffff" } },
       (err) => {
-        if (err) {
-          fallbackQrImage(url, canvas, img);
+        if (err) return;
+        // Keep server img if it already looks fine; only swap if img failed to load
+        if (img.naturalWidth === 0) {
+          img.hidden = true;
+          canvas.hidden = false;
         }
       }
     );
-    return;
   }
-  fallbackQrImage(url, canvas, img);
-}
-
-function fallbackQrImage(url, canvas, img) {
-  if (canvas) canvas.hidden = true;
-  if (!img) return;
-  img.hidden = false;
-  img.src = "api/qr.php?u=" + encodeURIComponent(url) + "&t=" + Date.now();
-  img.onerror = () => {
-    img.src =
-      "https://api.qrserver.com/v1/create-qr-code/?size=280x280&ecc=M&margin=8&data=" +
-      encodeURIComponent(url);
-  };
 }
 
 document.getElementById("settingsForm").addEventListener("submit", async (e) => {
@@ -104,7 +109,7 @@ document.getElementById("settingsForm").addEventListener("submit", async (e) => 
     document.getElementById("saveMsg").textContent = "Settings saved.";
   } catch (err) {
     document.getElementById("saveMsg").textContent =
-      err.message + "（若在 cPanel：请确认 config 文件夹可写，并已有 config.php）";
+      err.message + "（若在 cPanel：请确认 config 文件夹可写）";
   } finally {
     btn.disabled = false;
     btn.textContent = "Save settings";
@@ -134,20 +139,6 @@ document.getElementById("testBtn").addEventListener("click", async () => {
   }
 });
 
-const copyBtn = document.getElementById("copyUrlBtn");
-if (copyBtn) {
-  copyBtn.addEventListener("click", async () => {
-    const url = phoneUrl();
-    try {
-      await navigator.clipboard.writeText(url);
-      copyBtn.textContent = "已复制";
-      setTimeout(() => (copyBtn.textContent = "复制链接"), 1200);
-    } catch (_) {
-      prompt("复制链接：", url);
-    }
-  });
-}
-
 const openHttpsBtn = document.getElementById("openHttpsBtn");
 if (openHttpsBtn) {
   openHttpsBtn.href = phoneUrl() || "index.php";
@@ -155,8 +146,7 @@ if (openHttpsBtn) {
 
 bindShowHide("gemini_api_key", "toggleGeminiKey");
 bindShowHide("agnes_api_key", "toggleAgnesKey");
-
-renderQr();
+reinforceQr();
 
 (async function init() {
   try {
