@@ -53,16 +53,18 @@
         <?php
           $qrSrc = 'api/qr.php?u=' . rawurlencode($phoneUrl) . '&t=' . time();
         ?>
-        <img
-          id="phoneQrImg"
-          class="qr-image"
-          src="<?= htmlspecialchars($qrSrc, ENT_QUOTES, 'UTF-8') ?>"
-          width="280"
-          height="280"
-          alt="手机扫描二维码"
-          decoding="async"
-        />
-        <canvas id="phoneQrCanvas" width="280" height="280" class="qr-image" hidden aria-hidden="true"></canvas>
+        <div id="phoneQrWrap" class="qr-image" style="padding:0;overflow:hidden;display:flex;align-items:center;justify-content:center">
+          <canvas id="phoneQrCanvas" width="280" height="280" aria-label="手机扫描二维码"></canvas>
+          <img
+            id="phoneQrImg"
+            src="<?= htmlspecialchars($qrSrc, ENT_QUOTES, 'UTF-8') ?>"
+            width="280"
+            height="280"
+            alt="手机扫描二维码"
+            hidden
+            decoding="async"
+          />
+        </div>
         <p class="qr-url" id="phoneQrUrl" data-url="<?= htmlspecialchars($phoneUrl, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($phoneUrl, ENT_QUOTES, 'UTF-8') ?></p>
         <?php if ($isHttps): ?>
           <p class="qr-sub" style="color:#9fe0c8">✓ HTTPS 已就绪 — 用手机扫上方二维码即可开相机</p>

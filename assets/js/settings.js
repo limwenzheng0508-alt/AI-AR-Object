@@ -37,43 +37,49 @@ function phoneUrl() {
   return (el?.dataset?.url || el?.textContent || "").trim();
 }
 
-/** If server PNG fails, redraw QR on canvas using local library (no CDN). */
-function reinforceQr() {
+/**
+ * Always draw a real scannable QR on the canvas (local library, no CDN).
+ * Falls back to server PNG <img> only if the library failed to load.
+ */
+function drawPhoneQr() {
   const url = phoneUrl();
-  const img = document.getElementById("phoneQrImg");
   const canvas = document.getElementById("phoneQrCanvas");
-  if (!url || !img) return;
+  const img = document.getElementById("phoneQrImg");
+  if (!url) return;
 
-  img.addEventListener("error", () => {
-    if (!window.QRCode || !canvas) return;
-    QRCode.toCanvas(
-      canvas,
-      url,
-      { width: 280, margin: 2, errorCorrectionLevel: "M", color: { dark: "#111111", light: "#ffffff" } },
-      (err) => {
-        if (err) return;
-        img.hidden = true;
-        canvas.hidden = false;
+  const showImg = () => {
+    if (canvas) canvas.hidden = true;
+    if (img) {
+      img.hidden = false;
+      if (!img.getAttribute("src")) {
+        img.src = "api/qr.php?u=" + encodeURIComponent(url) + "&t=" + Date.now();
       }
-    );
-  });
+    }
+  };
 
-  // Also upgrade blurry/failed SVG placeholders via canvas when possible
-  if (window.QRCode && canvas) {
-    QRCode.toCanvas(
-      canvas,
-      url,
-      { width: 280, margin: 2, errorCorrectionLevel: "M", color: { dark: "#111111", light: "#ffffff" } },
-      (err) => {
-        if (err) return;
-        // Keep server img if it already looks fine; only swap if img failed to load
-        if (img.naturalWidth === 0) {
-          img.hidden = true;
-          canvas.hidden = false;
-        }
-      }
-    );
+  if (!window.QRCode || typeof QRCode.toCanvas !== "function" || !canvas) {
+    showImg();
+    return;
   }
+
+  QRCode.toCanvas(
+    canvas,
+    url,
+    {
+      width: 280,
+      margin: 2,
+      errorCorrectionLevel: "M",
+      color: { dark: "#111111", light: "#ffffff" },
+    },
+    (err) => {
+      if (err) {
+        showImg();
+        return;
+      }
+      canvas.hidden = false;
+      if (img) img.hidden = true;
+    }
+  );
 }
 
 document.getElementById("settingsForm").addEventListener("submit", async (e) => {
@@ -146,7 +152,7 @@ if (openHttpsBtn) {
 
 bindShowHide("gemini_api_key", "toggleGeminiKey");
 bindShowHide("agnes_api_key", "toggleAgnesKey");
-reinforceQr();
+drawPhoneQr();
 
 (async function init() {
   try {
